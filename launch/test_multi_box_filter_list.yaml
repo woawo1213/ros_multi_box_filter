@@ -1,0 +1,8 @@
+scan_filter_chain:
+- name: multibox
+  type: laser_filters/LaserScanMultiBoxFilter
+  params:
+    box_frame: base_link
+    box: [[3.4, 3.9, 1.1, 0.5], [3.4, -3.4, 1.1, 0.5], 
+          [-2.3, 3.9, 1.1, 0.5], [-2.3, -3.4, 1.1, 0.5]]
+    invert: false

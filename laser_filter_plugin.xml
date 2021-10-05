@@ -1,0 +1,13 @@
+<class_libraries>
+    <library path="lib/libmulti_box_filter">
+        <class name="laser_filters/LaserScanMultiBoxFilter" type="laser_filters::LaserScanMultiBoxFilter" base_class_type="filters::FilterBase<sensor_msgs::LaserScan>">
+            <description>
+<<<<<<< HEAD
+	This is a filter that removes points in a laser scan inside of multi cartesian box.
+=======
+	 This is a filter that removes points in a laser scan inside of multi cartesian box.
+>>>>>>> b41b8e07387c297e97d705afd4171a8509766402
+            </description>
+        </class>
+    </library>
+</class_libraries>
