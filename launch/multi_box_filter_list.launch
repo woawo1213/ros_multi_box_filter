@@ -1,0 +1,7 @@
+<launch>
+    <node pkg="multi_box_filter" type="scan_to_scan_filter_chain" output="screen" name="multi_box_filter">
+        <remap from="scan" to="/lrf/scan_raw" />
+        <remap from="scan_filtered" to="/lrf/scan_box" />
+        <rosparam command="load" file="$(find multi_box_filter)/launch/multi_box_filter_list.yaml" />
+    </node>
+</launch>

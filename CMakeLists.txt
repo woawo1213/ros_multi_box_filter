@@ -30,7 +30,6 @@ catkin_package(
 add_library(multi_box_filter
   src/multi_box_filter.cpp
 )
-<<<<<<< HEAD
 target_link_libraries(multi_box_filter ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(scan_to_scan_filter_chain src/scan_to_scan_filter_chain.cpp)
@@ -40,13 +39,6 @@ target_link_libraries(scan_to_scan_filter_chain ${catkin_LIBRARIES} ${Boost_LIBR
 ##############################################################################
 # Install
 ##############################################################################
-=======
-target_link_libraries(laser_multi_box ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-##############################################################################
-# Install
-##############################################################################
-
->>>>>>> b41b8e07387c297e97d705afd4171a8509766402
 install(TARGETS multi_box_filter 
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
