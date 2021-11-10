@@ -52,3 +52,12 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(FILES laser_filter_plugin.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+install(PROGRAMS
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+catkin_install_python(PROGRAMS
+  script/true_pub.py
+  script/false_pub.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

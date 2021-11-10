@@ -1,6 +1,7 @@
 /*
  *  multi_box_filter.h
- *  modified: JMSHIN <woawo1213@gmail.com>
+ *  author: Sebastian Pütz <spuetz@uni-osnabrueck.de>
+ *  modified: jm <jmshin@wonik.com>
  */
 
 #ifndef MULTIBOXFILTER_H
@@ -21,13 +22,13 @@
 
 namespace laser_filters
 {
-    /**
- * @brief This is a filter that removes points in a laser scan inside of multi cartesian box.
+    /*
+ * @brief This is a filter that removes points in a laser scan inside of a cartesian box.
  */
 
     struct Box
     {
-        Box(float x, float y, float w, float h) : x(x), y(y), w(w), h(h) {}
+        Box(float x, float y, float w, float h) : x(x), y(y), w(w), h(h) {} //struct constructor
         float x, y, w, h;
         Box() { float x = 0, y = 0, w = 0, h = 0; }
     };
@@ -56,9 +57,11 @@ namespace laser_filters
 
         // defines two opposite corners of the box
         std::vector<tf::Point> min_, max_;
+        tf::Point min_tmp, max_tmp;
 
         bool invert_filter;
         bool up_and_running_;
+        bool switch_state;
     };
 
 }

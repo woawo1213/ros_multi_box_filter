@@ -1,8 +1,11 @@
 /*
- *  multi_box_filter.h
- *  modified: JMSHIN <woawo1213@gmail.com>
+ *  Software License Agreement (BSD License)
+ *
+ *  multi_box_filter.cpp
+ *
+ *  author: Sebastian Pütz <spuetz@uni-osnabrueck.de>
+ *  modified: jm <jmshin@wonik.com>
  */
-
 #include <string>
 #include <vector>
 
@@ -34,7 +37,7 @@ std::vector<laser_filters::Box> makeBoxFromXMLRPC(const XmlRpc::XmlRpcValue &box
     laser_filters::Box box_tmp;
     std::vector<laser_filters::Box> box_;
 
-    float f_x, f_y, f_w, f_h; // [X, Y, W, H]
+    float f_x, f_y, f_w, f_h;
 
     // Make sure we have an array of at least 1 elements.
     if (box_xmlrpc.getType() != XmlRpc::XmlRpcValue::TypeArray || box_xmlrpc.size() < 1)
@@ -83,7 +86,6 @@ laser_filters::LaserScanMultiBoxFilter::LaserScanMultiBoxFilter()
 bool laser_filters::LaserScanMultiBoxFilter::configure()
 {
     XmlRpc::XmlRpcValue box_xmlrpc;
-    tf::Point min_tmp, max_tmp;
 
     up_and_running_ = true;
 
@@ -94,13 +96,13 @@ bool laser_filters::LaserScanMultiBoxFilter::configure()
 
     for (int i = 0; i < box_.size(); i++)
     {
-        max_tmp.setX(box_[i].x); //max_.x()
-        max_tmp.setY(box_[i].y); //max_.y()
+        max_tmp.setX(box_[i].x + box_[i].w);
+        max_tmp.setY(box_[i].y);
         max_tmp.setZ(1.000);
         max_.push_back(max_tmp);
 
-        min_tmp.setX(box_[i].x - box_[i].w); //min_.x()
-        min_tmp.setY(box_[i].y - box_[i].h); //min_.y()
+        min_tmp.setX(box_[i].x);
+        min_tmp.setY(box_[i].y - box_[i].h);
         min_tmp.setZ(-1.000);
         min_.push_back(min_tmp);
     }
@@ -145,7 +147,7 @@ bool laser_filters::LaserScanMultiBoxFilter::update(
         ROS_WARN("Could not get transform, irgnoring laser scan! %s", error_msg.c_str());
         return false;
     }
-
+    //polar to cartesian
     try
     {
         projector_.transformLaserScanToPointCloud(box_frame_, input_scan, laser_cloud, tf_);
@@ -210,9 +212,9 @@ bool laser_filters::LaserScanMultiBoxFilter::update(
 
         if (!invert_filter)
         {
-            for (int count_ = 0; count_ < box_count; count_++) //remove the boxes of the lits
+            for (int i = 0; i < box_count; i++)
             {
-                if (inBox(point, count_))
+                if (inBox(point, i))
                 {
                     output_scan.ranges[index] = std::numeric_limits<float>::quiet_NaN();
                 }
@@ -220,9 +222,9 @@ bool laser_filters::LaserScanMultiBoxFilter::update(
         }
         else
         {
-            for (int count_ = 0; count_ < box_count; count_++)
+            for (int i = 0; i < box_count; i++)
             {
-                if (inBox(point, count_))
+                if (inBox(point, i))
                 {
                     output_scan.ranges[index] = std::numeric_limits<float>::quiet_NaN();
                 }
