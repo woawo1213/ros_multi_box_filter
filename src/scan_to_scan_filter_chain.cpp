@@ -1,10 +1,10 @@
+
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
 #include "message_filters/subscriber.h"
 #include "tf/message_filter.h"
 #include "tf/transform_listener.h"
 #include "filters/filter_chain.h"
-#include <std_msgs/Bool.h>
 
 class ScanToScanFilterChain
 {
@@ -23,16 +23,11 @@ protected:
     filters::FilterChain<sensor_msgs::LaserScan> filter_chain_;
 
     // Components for publishing
-    sensor_msgs::LaserScan msg_;
     ros::Publisher output_pub_;
 
     // Deprecation helpers
     ros::Timer deprecation_timer_;
     bool using_filter_chain_deprecated_;
-
-    //swich filter status
-    std_msgs::Bool switch_status;
-    ros::Subscriber switch_sub_;
 
 public:
     // Constructor
@@ -43,9 +38,7 @@ public:
                               filter_chain_("sensor_msgs::LaserScan")
     {
         // Configure filter chain
-
         using_filter_chain_deprecated_ = private_nh_.hasParam("filter_chain");
-
         if (using_filter_chain_deprecated_)
             filter_chain_.configure("filter_chain", private_nh_);
         else
@@ -78,9 +71,6 @@ public:
 
         // Set up deprecation printout
         deprecation_timer_ = nh_.createTimer(ros::Duration(5.0), boost::bind(&ScanToScanFilterChain::deprecation_warn, this, _1));
-
-        // set swich status
-        switch_sub_ = nh_.subscribe("topic", 1000, &ScanToScanFilterChain::switchCallback, this);
     }
 
     // Destructor
@@ -99,30 +89,20 @@ public:
             ROS_WARN("Use of '~filter_chain' parameter in scan_to_scan_filter_chain has been deprecated. Please replace with '~scan_filter_chain'.");
     }
 
-    void switchCallback(std_msgs::Bool state)
-    {
-        switch_status = state;
-    }
-
     // Callback
     void callback(const sensor_msgs::LaserScan::ConstPtr &msg_in)
     {
-        if (switch_status.data == true)
+        sensor_msgs::LaserScan msg;
+
+        // Run the filter chain
+        if (filter_chain_.update(*msg_in, msg))
         {
-            // Run the filter chain
-            if (filter_chain_.update(*msg_in, msg_))
-            {
-                //only publish result if filter succeeded
-                output_pub_.publish(msg_);
-            }
-            else
-            {
-                ROS_ERROR_THROTTLE(1, "Filtering the scan from time %i.%i failed.", msg_in->header.stamp.sec, msg_in->header.stamp.nsec);
-            }
+            // only publish result if filter succeeded
+            output_pub_.publish(msg);
         }
         else
         {
-            output_pub_.publish(msg_in);
+            ROS_ERROR_THROTTLE(1, "Filtering the scan from time %i.%i failed.", msg_in->header.stamp.sec, msg_in->header.stamp.nsec);
         }
     }
 };

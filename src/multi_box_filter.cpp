@@ -4,12 +4,11 @@
  *  multi_box_filter.cpp
  *
  *  author: Sebastian Pütz <spuetz@uni-osnabrueck.de>
- *  modified: jm <jmshin@wonik.com>
+ *  modified: jm <woawo1213@gmail.com>
  */
 #include <string>
 #include <vector>
 
-#include "multi_box_filter/multi_box_filter.h"
 #include <ros/ros.h>
 #include "sensor_msgs/LaserScan.h"
 #include "filters/filter_base.h"
@@ -19,93 +18,18 @@
 
 PLUGINLIB_EXPORT_CLASS(laser_filters::LaserScanMultiBoxFilter, filters::FilterBase<sensor_msgs::LaserScan>)
 
-double getNumberFromXMLRPC(XmlRpc::XmlRpcValue &value, const std::string &full_param_name)
-{
-    // Make sure that the value we're looking at is either a double or an int.
-    if (value.getType() != XmlRpc::XmlRpcValue::TypeInt && value.getType() != XmlRpc::XmlRpcValue::TypeDouble)
-    {
-        std::string &value_string = value;
-        ROS_FATAL("Values in the polygon specification (param %s) must be numbers. Found value %s.",
-                  full_param_name.c_str(), value_string.c_str());
-        throw std::runtime_error("Values in the polygon specification must be numbers");
-    }
-    return value.getType() == XmlRpc::XmlRpcValue::TypeInt ? (int)(value) : (double)(value);
-}
-
-std::vector<laser_filters::Box> makeBoxFromXMLRPC(const XmlRpc::XmlRpcValue &box_xmlrpc, const std::string &full_param_name)
-{
-    laser_filters::Box box_tmp;
-    std::vector<laser_filters::Box> box_;
-
-    float f_x, f_y, f_w, f_h;
-
-    // Make sure we have an array of at least 1 elements.
-    if (box_xmlrpc.getType() != XmlRpc::XmlRpcValue::TypeArray || box_xmlrpc.size() < 1)
-    {
-        ROS_FATAL("The box (parameter %s) must be specified as nested list on the parameter server with at least "
-                  "1 box eg: [[x1, y1, w1, h1]]",
-                  full_param_name.c_str());
-
-        throw std::runtime_error("The box must be specified as nested list on the parameter server with at least "
-                                 "1 box eg: [[x1, y1, w1, h1]]");
-    }
-
-    for (int i = 0; i < box_xmlrpc.size(); ++i)
-    {
-        // Make sure each element of the list is an array of size 4. (x and y and width and height coordinates)
-        XmlRpc::XmlRpcValue point = box_xmlrpc[i];
-        if (point.getType() != XmlRpc::XmlRpcValue::TypeArray || point.size() != 4)
-        {
-            ROS_FATAL("The box (parameter %s) must be specified as list of lists on the parameter server eg: "
-                      "[[x1, y1, w1, h1], ..., [xn, yn, wn, hn]], but this spec is not of that form.",
-                      full_param_name.c_str());
-            throw std::runtime_error("The box must be specified as list of lists on the parameter server eg: "
-                                     "[[x1, y1, w1, h1], ..., [xn, yn, wn, hn]], but this spec is not of that form");
-        }
-
-        f_x = getNumberFromXMLRPC(point[0], full_param_name);
-        f_y = getNumberFromXMLRPC(point[1], full_param_name);
-        f_w = getNumberFromXMLRPC(point[2], full_param_name);
-        f_h = getNumberFromXMLRPC(point[3], full_param_name);
-
-        box_tmp.x = f_x;
-        box_tmp.y = f_y;
-        box_tmp.w = f_w;
-        box_tmp.h = f_h;
-
-        box_.push_back(box_tmp);
-    }
-
-    return box_;
-}
-
-laser_filters::LaserScanMultiBoxFilter::LaserScanMultiBoxFilter()
-{
-}
-
 bool laser_filters::LaserScanMultiBoxFilter::configure()
 {
-    XmlRpc::XmlRpcValue box_xmlrpc;
+    XmlRpc::XmlRpcValue box_xmlrpc_;
 
     up_and_running_ = true;
-
-    bool box_set = getParam("box", box_xmlrpc);
+    bool box_set = getParam("box", box_xmlrpc_);
     bool box_frame_set = getParam("box_frame", box_frame_);
     bool invert_set = getParam("invert", invert_filter);
-    box_ = makeBoxFromXMLRPC(box_xmlrpc, "box");
+    parser_.getbox_ = ParameterPaser::makeBoxFromXMLRPC(box_xmlrpc_, "box");
 
-    for (int i = 0; i < box_.size(); i++)
-    {
-        max_tmp.setX(box_[i].x + box_[i].w);
-        max_tmp.setY(box_[i].y);
-        max_tmp.setZ(1.000);
-        max_.push_back(max_tmp);
-
-        min_tmp.setX(box_[i].x);
-        min_tmp.setY(box_[i].y - box_[i].h);
-        min_tmp.setZ(-1.000);
-        min_.push_back(min_tmp);
-    }
+    // parser_.load_param();
+    marker_pub_.initialize(parser_.getbox_);
 
     ROS_INFO("Multi Box filter started!");
 
@@ -147,7 +71,7 @@ bool laser_filters::LaserScanMultiBoxFilter::update(
         ROS_WARN("Could not get transform, irgnoring laser scan! %s", error_msg.c_str());
         return false;
     }
-    //polar to cartesian
+    // polar to cartesian
     try
     {
         projector_.transformLaserScanToPointCloud(box_frame_, input_scan, laser_cloud, tf_);
@@ -199,45 +123,26 @@ bool laser_filters::LaserScanMultiBoxFilter::update(
        y_idx += pstep,
        z_idx += pstep)
     {
-
         // TODO works only for float data types and with an index field
         // I'm working on it, see https://github.com/ros/common_msgs/pull/78
         float x = *((float *)(&laser_cloud.data[x_idx]));
         float y = *((float *)(&laser_cloud.data[y_idx]));
         float z = *((float *)(&laser_cloud.data[z_idx]));
         int index = *((int *)(&laser_cloud.data[i_idx]));
-        int box_count = box_.size();
 
-        tf::Point point(x, y, z);
+        // invert_filter 신경 안씀
 
-        if (!invert_filter)
+        for (int i = 0; i < parser_.getbox_.size(); i++)
         {
-            for (int i = 0; i < box_count; i++)
+            if (parser_.getbox_[i].is_in(x, y))
             {
-                if (inBox(point, i))
-                {
-                    output_scan.ranges[index] = std::numeric_limits<float>::quiet_NaN();
-                }
+                output_scan.ranges[index] = std::numeric_limits<float>::quiet_NaN();
+                break;
             }
-        }
-        else
-        {
-            for (int i = 0; i < box_count; i++)
-            {
-                if (inBox(point, i))
-                {
-                    output_scan.ranges[index] = std::numeric_limits<float>::quiet_NaN();
-                }
-            }
+            marker_pub_.publish();
         }
     }
+
     up_and_running_ = true;
     return true;
-}
-
-bool laser_filters::LaserScanMultiBoxFilter::inBox(tf::Point &point, int count)
-{
-    return point.x() < max_[count].x() && point.x() > min_[count].x() &&
-           point.y() < max_[count].y() && point.y() > min_[count].y() &&
-           point.z() < max_[count].z() && point.z() > min_[count].z();
 }
