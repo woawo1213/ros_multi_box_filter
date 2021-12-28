@@ -28,7 +28,6 @@ bool laser_filters::LaserScanMultiBoxFilter::configure()
     bool invert_set = getParam("invert", invert_filter);
     parser_.getbox_ = ParameterPaser::makeBoxFromXMLRPC(box_xmlrpc_, "box");
 
-    // parser_.load_param();
     marker_pub_.initialize(parser_.getbox_);
 
     ROS_INFO("Multi Box filter started!");
@@ -139,10 +138,9 @@ bool laser_filters::LaserScanMultiBoxFilter::update(
                 output_scan.ranges[index] = std::numeric_limits<float>::quiet_NaN();
                 break;
             }
-            marker_pub_.publish();
         }
     }
-
+    marker_pub_.publish(input_scan.header.stamp);
     up_and_running_ = true;
     return true;
 }
