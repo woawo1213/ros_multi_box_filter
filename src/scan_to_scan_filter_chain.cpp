@@ -6,8 +6,7 @@
 #include "tf/transform_listener.h"
 #include "filters/filter_chain.h"
 
-class ScanToScanFilterChain
-{
+class ScanToScanFilterChain {
 protected:
     // Our NodeHandle
     ros::NodeHandle nh_;
@@ -77,21 +76,21 @@ public:
     ~ScanToScanFilterChain()
     {
         if (tf_filter_)
-            delete tf_filter_;
+        delete tf_filter_;
         if (tf_)
-            delete tf_;
+        delete tf_;
     }
 
     // Deprecation warning callback
-    void deprecation_warn(const ros::TimerEvent &e)
-    {
+    void deprecation_warn(const ros::TimerEvent &e) {
         if (using_filter_chain_deprecated_)
-            ROS_WARN("Use of '~filter_chain' parameter in scan_to_scan_filter_chain has been deprecated. Please replace with '~scan_filter_chain'.");
+        ROS_WARN(
+            "Use of '~filter_chain' parameter in scan_to_scan_filter_chain has "
+            "been deprecated. Please replace with '~scan_filter_chain'.");
     }
 
     // Callback
-    void callback(const sensor_msgs::LaserScan::ConstPtr &msg_in)
-    {
+    void callback(const sensor_msgs::LaserScan::ConstPtr &msg_in) {
         sensor_msgs::LaserScan msg;
 
         // Run the filter chain
@@ -107,7 +106,7 @@ public:
     }
 };
 
-int main(int argc, char **argv)
+int main(int argc, char **argv) 
 {
     ros::init(argc, argv, "scan_to_scan_filter_chain");
 

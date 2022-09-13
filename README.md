@@ -1,7 +1,11 @@
 # This package modified based laser_filters/box_filter.cpp
 
-### Make several box coordinates in the form of a lists.
-
-### e.g.) [x, y, width, height] / N box: [[x1,y1,w1,h1], ... ,[xn,yn,wn,hn]]
-
-### X: max_x, Y: max_y, W: max_y - min_y, H: max_x - min_x
+## 1. Usage
+- .yaml 의 box에 filtering을 원하는 좌표를 string 형식으로 입력
+- e.g.) [top_left_x, top_left_y],[top_right_x, top_right_y],[bottom_right_x, bottom_right_y],[bottom_left_x, bottom_left_y]
+```
+box:"[
+        [[0.6980, 0.3730],[0.6980, 0.3430],[0.5980, 0.3430],[0.5980, 0.3730]],
+        ...
+    ]"
+```
